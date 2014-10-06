@@ -19,6 +19,7 @@
 #include <QImage>
 #include "pixytypes.h"
 #include "processblobs.h"
+#include "facedetect.h"
 
 class Interpreter;
 
@@ -44,6 +45,8 @@ public:
     }
 
     int saveImage(const QString &filename);
+
+    void faceDetect(QImage &image);
 
     Frame8 m_rawFrame;
     ProcessBlobs m_blobs;
@@ -80,6 +83,8 @@ private:
     QImage m_background;
 
     uint32_t m_mode;
+
+    CascadeClassifier m_cascade;
 };
 
 #endif // RENDERER_H

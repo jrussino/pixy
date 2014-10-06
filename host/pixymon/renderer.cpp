@@ -23,7 +23,7 @@
 #include "calc.h"
 #include <math.h>
 
-Renderer::Renderer(VideoWidget *video, Interpreter *interpreter) : m_blobs(interpreter), m_background(0, 0)
+Renderer::Renderer(VideoWidget *video, Interpreter *interpreter) : m_blobs(interpreter), m_background(0, 0), m_cascade("/home/jrussino/projects/current/pixyCV/fdetect-proto/lbpcascade_frontalface.xml")
 {
     m_video = video;
     m_interpreter = interpreter;
@@ -207,6 +207,10 @@ int Renderer::renderBA81(uint8_t renderFlags, uint16_t width, uint16_t height, u
         }
         frame++;
     }
+
+    // Run face detection
+    faceDetect(img);
+
     // send image to ourselves across threads
     // from chirp thread to gui thread
     emitImage(img);
@@ -581,7 +585,6 @@ void Renderer::regionCommand(int x0, int y0, int width, int height, const QStrin
 
 }
 
-
 int Renderer::renderBackground()
 {
     if (m_background.width()!=0)
@@ -595,3 +598,19 @@ int Renderer::saveImage(const QString &filename)
     return m_background.save(filename);
 }
 
+void Renderer::faceDetect(QImage &image)
+{
+/*
+    // Run face detection
+    std::vector<detectionLocation> faces = m_cascade.detectMultiScale(image, 1.3, 1);
+
+    // Draw detected faces
+    QPainter p;
+    p.begin(&image);
+    for (std::vector<detectionLocation>::const_iterator detectionLoc = faces.begin(); detectionLoc != faces.end(); ++detectionLoc)
+    {
+        p.drawRect(detectionLoc->locationX, detectionLoc->locationY, detectionLoc->height, detectionLoc->width);
+//        p.drawText(detectionLoc->locationX, detectionLoc->locationY, "face here");
+    }
+*/
+}

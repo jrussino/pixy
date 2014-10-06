@@ -30,7 +30,9 @@ SOURCES += main.cpp\
     processblobs.cpp \
     ../../common/qqueue.cpp \
     configdialog.cpp \
-    aboutdialog.cpp
+    aboutdialog.cpp \
+    facedetect.cpp \
+    tinyxml2.cpp \
 
 HEADERS  += mainwindow.h \
     videowidget.h \
@@ -59,7 +61,9 @@ HEADERS  += mainwindow.h \
     configdialog.h \
     ../../common/link.h \
     sleeper.h \
-    aboutdialog.h
+    aboutdialog.h \
+    facedetect.h \
+    tinyxml2.h \
 
 INCLUDEPATH += ../../common
 
