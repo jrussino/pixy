@@ -17,54 +17,43 @@
 #include <math.h>
 #include <iostream>
 
-/*
-//TODO
-IntegralImage::IntegralImage(const QImage &image)
+
+IntegralImage::IntegralImage(const QImage &image) :
+    m_height(image.height()), //TODO change to correct height
+    m_width(image.width()) //TODO change to correct width
 {
 
     // TODO resize
-    // NOTE: for now, try to avoid this
 
-    // convert to grayscale
-    Qimage grayImage = image.convertToFormat(QImage::Format_MONOCHROME);
-
-    // equalize
-    
     // create integral image
-    // initialize to n+1xm+1 array of 23-bit ints
-
-}
-*/
-
-// XXX remove
-/*
-IntegralImage::IntegralImage(const uint16_t &height, const uint16_t &width) :
-m_width(width),
-m_height(height)
-{
-    if (width > 0 && height > 0)
+    // initialize to n+1xm+1 array of 32-bit ints
+    for (unsigned int row = 1; row < image.height(); ++row)
     {
-        m_data = new uint32_t[width*height];
-    }
+        for (unsigned int col = 1; col < image.height(); ++col)
+        {
+            // get grayscale value of pixel
+            uint8_t intensity = qGray(image.pixel(col, row));
 
-    for (uint16_t i = 0; i < width; ++i)
-    {
-        m_data[i] = 0; // sets first row values to 0 
-    }
-    for (uint16_t i = 0; i < height; ++i)
-    {
-        m_data[i*width] = 0; // sets first col values to 0
+            /*
+            uint32_t rowSum = m_data[(row-1)*m_width + col];
+            uint32_t colSum = m_data[row*m_width + (col-1)];
+            uint32_t diagSum = m_data[(row-1)*m_width + (col-1)];
+            */
+            uint32_t rowSum = m_data[row-1][col];
+            uint32_t colSum = m_data[row][col-1];
+            uint32_t diagSum = m_data[row-1][col-1];
+            m_data[row][col] = intensity + rowSum + colSum - diagSum;
+
+        }
     }
 }
-*/
 
-/*
+
 IntegralImage::~IntegralImage()
 {
-    delete [] m_data;
 }
 
-
+/*
 const uint32_t &IntegralImage::operator()(const uint16_t &row, const uint16_t &col) const
 {
     return m_data[row*m_width + col];
@@ -121,15 +110,13 @@ void IntegralImage::fromQImage(const QImage &image)
 }
 */
 
-/*
 detectionLocation::detectionLocation(const uint16_t &x, const uint16_t &y, const uint16_t &w, const uint16_t &h) :
-locationX(x),
-locationY(y),
-width(w),
-height(h)
+    locationX(x),
+    locationY(y),
+    width(w),
+    height(h)
 {
 }
-*/
 
 
 LBPFeature::LBPFeature(tinyxml2::XMLElement *featureElement, tinyxml2::XMLElement *rectanglesElement)
@@ -354,21 +341,6 @@ CascadeClassifier::CascadeClassifier(const std::string &cascadeFile)
 
         m_stages.push_back(CascadeStage(stageElement,rectanglesElement)); 
     }
-    
-/*
-    # parse out list of rectangles
-    rectangles = []
-    for element in cascade.iterfind('features/_/rect') :
-        rect = strToIntList(element.text)
-        rectangles.append(rect)
-
-    # create each of the stages
-    self.stages = []
-    for element in cascade.iterfind('stages/_') :
-        stage = CascadeStage(element, rectangles)
-        self.stages.append(stage)
-    return
-*/
 }
 
 
@@ -376,17 +348,22 @@ CascadeClassifier::~CascadeClassifier()
 {
 }
 
-/*
+
 std::vector<detectionLocation> CascadeClassifier::detectMultiScale(const QImage &image, 
                                                                    const uint16_t &scaleFactor, 
                                                                    const uint16_t &stepSize) const
 {
     // Create integral image from raw QImage
+    std::cerr << "Generating Integral Image" << std::endl;
     IntegralImage integralImage(image);
-    return detectMultiScale(integralImage, scaleFactor, stepSize);
+    std::cerr << "...DONE!" << std::endl;
+//    return detectMultiScale(integralImage, scaleFactor, stepSize);
+    std::vector<detectionLocation> detections;
+    return detections;
 }
 
 
+/*
 std::vector<detectionLocation> CascadeClassifier::detectMultiScale(IntegralImage &integralImage, 
                                                                    const uint16_t &scaleFactor, 
                                                                    const uint16_t &stepSize) const

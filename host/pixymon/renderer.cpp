@@ -600,7 +600,6 @@ int Renderer::saveImage(const QString &filename)
 
 void Renderer::faceDetect(QImage &image)
 {
-/*
     // Run face detection
     std::vector<detectionLocation> faces = m_cascade.detectMultiScale(image, 1.3, 1);
 
@@ -612,5 +611,4 @@ void Renderer::faceDetect(QImage &image)
         p.drawRect(detectionLoc->locationX, detectionLoc->locationY, detectionLoc->height, detectionLoc->width);
 //        p.drawText(detectionLoc->locationX, detectionLoc->locationY, "face here");
     }
-*/
 }
