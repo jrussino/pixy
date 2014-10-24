@@ -26,8 +26,8 @@ public:
     IntegralImage(const QImage &image);
     ~IntegralImage();
 
-    const uint32_t &operator()(const uint16_t &row, const uint16_t &col) const;
-    uint32_t &operator()(const uint16_t &row, const uint16_t &col);
+    const uint32_t operator()(const uint16_t &row, const uint16_t &col) const;
+    uint32_t operator()(const uint16_t &row, const uint16_t &col);
     uint16_t width();
     uint16_t height();
 
@@ -56,7 +56,7 @@ public:
     LBPFeature(tinyxml2::XMLElement *featureElement, tinyxml2::XMLElement *rectanglesElement);
     ~LBPFeature();
 
-    double evaluate(IntegralImage &integralImage, const uint16_t &windowCol, const uint16_t &windowRow, const uint16_t &scale) const;
+    double evaluate(IntegralImage &integralImage, const uint16_t &windowCol, const uint16_t &windowRow, const double &scale) const;
 
 private:
     std::vector<uint32_t> m_rectangle;
@@ -75,7 +75,7 @@ public:
     CascadeStage(tinyxml2::XMLElement *stageElement, tinyxml2::XMLElement *rectanglesElement);
     ~CascadeStage();
 
-    double evaluate(IntegralImage &integralImage, const uint16_t &locationX, const uint16_t &locationY, const uint16_t &scale) const;
+    bool evaluate(IntegralImage &integralImage, const uint16_t &locationX, const uint16_t &locationY, const double &scale) const;
 
 private:
     double m_threshold;
@@ -89,12 +89,12 @@ public:
     CascadeClassifier(const std::string &xmlFile);
     ~CascadeClassifier();
 
-    std::vector<detectionLocation> detectMultiScale(const QImage& image, const uint16_t &scaleFactor, const uint16_t &stepSize) const;
+    std::vector<detectionLocation> detectMultiScale(const QImage& image, const double &scaleFactor, const uint16_t &stepSize) const;
 
 private:
-    std::vector<detectionLocation> detectMultiScale(IntegralImage &integralImage, const uint16_t &scaleFactor, const uint16_t &stepSize) const;
-    std::vector<detectionLocation> detectSingleScale(IntegralImage &integralImage, const uint16_t &scaleFactor, const uint16_t &stepSize) const;
-    bool detectAtLocation(IntegralImage &integralImage, const uint16_t &locationX, const uint16_t &locationY, const uint16_t &scale) const;
+    std::vector<detectionLocation> detectMultiScale(IntegralImage &integralImage, const double &scaleFactor, const uint16_t &stepSize) const;
+    std::vector<detectionLocation> detectSingleScale(IntegralImage &integralImage, const double  &scale, const uint16_t &stepSize) const;
+    bool detectAtLocation(IntegralImage &integralImage, const uint16_t &locationX, const uint16_t &locationY, const double &scale) const;
 
     std::vector<CascadeStage> m_stages;
     unsigned int m_windowWidth;

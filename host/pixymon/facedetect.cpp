@@ -53,16 +53,16 @@ IntegralImage::~IntegralImage()
 {
 }
 
-/*
-const uint32_t &IntegralImage::operator()(const uint16_t &row, const uint16_t &col) const
+
+const uint32_t IntegralImage::operator()(const uint16_t &row, const uint16_t &col) const
 {
-    return m_data[row*m_width + col];
+    return m_data[row][col];
 }
 
 
-uint32_t &IntegralImage::operator()(const uint16_t &row, const uint16_t &col)
+uint32_t IntegralImage::operator()(const uint16_t &row, const uint16_t &col)
 {
-    return m_data[row*m_width + col];
+    return m_data[row][col];
 }
 
 
@@ -76,39 +76,7 @@ uint16_t IntegralImage::height()
 {
     return m_height;
 }
-*/
 
-//XXX remove
-/*
-void IntegralImage::fromQImage(const QImage &image)
-{
-    // check that the image is of the correct size
-    if (image.height() != (m_height - 1)) || (image.width() != (m_width - 1))
-    {
-        //TODO appropriate way to catch this error?
-        std::cerr << "ERROR: tried to create integral image of size (" << m_height << "," << m_width 
-                  << ") from QImage of size (" << image.height() << "," << image.width() << ")."
-    }
-
-    // convert each pixel to grayscale and add it in to the integral image
-    for (uint16_t row = 1; row < m_height; ++i)
-    {
-        for (uint16_t col = 1; col < m_width; ++col)
-        {
-            // get grayscale value for this pixel
-            QRgb color = image.pixel(row-1,col-1);
-            uint8_t intensity = qGray(color); //TODO how is grayscale pixel generated in OpenCV? This may be significant.
-
-            // calculate integral at this pixel location
-            uint32_t rowSum = m_data[(row-1)*m_width + col];
-            uint32_t colSum = m_data[row*m_width + (col-1)];
-            uint32_t diagSum = m_data[(row-1)*m_width + (col-1)];
-            m_data[(row*m_width) + col] = intensity + rowSum + colSum - diagSum;
-        }
-    }
-    return; 
-}
-*/
 
 detectionLocation::detectionLocation(const uint16_t &x, const uint16_t &y, const uint16_t &w, const uint16_t &h) :
     locationX(x),
@@ -178,18 +146,17 @@ LBPFeature::~LBPFeature()
 }
 
 
-/*
+
 // TODO
 double LBPFeature::evaluate(IntegralImage &integralImage, 
-                            const uint16_t &windowCol, 
                             const uint16_t &windowRow, 
-                            const uint16_t &scale) const
+                            const uint16_t &windowCol, 
+                            const double &scale) const
 {
-
-    uint16_t rowStart = windowRow + lround(m_rectangle.row*scale);
-    uint16_t colStart = windowCol + lround(m_rectangle.col*scale);
-    uint16_t rectW = lround(m_rectangle.width*scale);
-    uint16_t rectH = lround(m_rectangle.height*scale);
+    uint16_t rowStart = windowRow + lround(m_rectangle[1]*scale);
+    uint16_t colStart = windowCol + lround(m_rectangle[0]*scale);
+    uint16_t rectW = lround(m_rectangle[2]*scale);
+    uint16_t rectH = lround(m_rectangle[3]*scale);
 
     // compute the values for each box
     std::vector<uint32_t> boxVals; 
@@ -210,18 +177,15 @@ double LBPFeature::evaluate(IntegralImage &integralImage,
         }
     }
 
-    //TODO compare to center box to get local binary pattern
-    lbp = ''
-    for boxIndex in [0,1,2,5,8,7,6,3] :
-        lbp += str(int(boxVals[boxIndex] >= boxVals[4]))
-    lbp = int(lbp,2) # convert from binary string to integer
+    // compare to center box to get local binary pattern
+    uint32_t lbp = ((int(boxVals[0]) >= int(boxVals[4])) << 7) | ((int(boxVals[1]) >= int(boxVals[4])) << 6) | ((int(boxVals[2]) >= int(boxVals[4])) << 5) | ((int(boxVals[5]) >= int(boxVals[4])) << 4) | ((int(boxVals[8]) >= int(boxVals[4])) << 3) | ((int(boxVals[7]) >= int(boxVals[4])) << 2) | ((int(boxVals[6]) >= int(boxVals[4])) << 1) | ((int(boxVals[3]) >= int(boxVals[4])) << 0);
 
     // look up match value in the feature's lookup table
-    matchValue = (m_lookupTable[lbp>>5] & (1 << (lbp & 31)));
+    uint8_t matchValue = (m_lookupTable[lbp >> 5] >> (lbp & 31))&1;
 
     // set feature score based on match value
     double featureScore;
-    if matchValue == 0
+    if (matchValue == 0)
     {
       featureScore = m_passWeight;
     }
@@ -229,12 +193,10 @@ double LBPFeature::evaluate(IntegralImage &integralImage,
     {
       featureScore = m_failWeight;
     }
-    return featureScore;
 
-    double featureScore = 0.0;  //XXX
-    return featureScore;   //XXX
+    return featureScore;
 }
-*/
+
 
 
 std::vector<uint32_t> LBPFeature::textToUnsignedList(const char *text)
@@ -294,20 +256,26 @@ CascadeStage::~CascadeStage()
 }
 
 
-/*
-double CascadeStage::evaluate(IntegralImage &integralImage, 
-                              const uint16_t &locationX, 
-                              const uint16_t &locationY, 
-                              const uint16_t &scale) const
+
+bool CascadeStage::evaluate(IntegralImage &integralImage, 
+                              const uint16_t &row, 
+                              const uint16_t &col, 
+                              const double &scale) const
 {
     double score = 0.0;
     for (std::vector<LBPFeature>::const_iterator feature = m_features.begin(); feature != m_features.end(); ++feature)
     {
-        score += feature->evaluate(integralImage, locationX, locationY, scale); 
+        score += feature->evaluate(integralImage, row, col, scale); 
+        if (score < m_threshold)
+        {
+//            std::cerr << "STAGE evaluates to FALSE - score of " << score << " is less than threshold " << m_threshold << std::endl; //XXX
+            return false;
+        }
     }
-    return score;
+//    std::cerr << "STAGE evaluates to TRUE" << std::endl; //XXX
+    return true;
 }
-*/
+
 
 CascadeClassifier::CascadeClassifier(const std::string &cascadeFile)
 {
@@ -350,27 +318,25 @@ CascadeClassifier::~CascadeClassifier()
 
 
 std::vector<detectionLocation> CascadeClassifier::detectMultiScale(const QImage &image, 
-                                                                   const uint16_t &scaleFactor, 
+                                                                   const double &scaleFactor, 
                                                                    const uint16_t &stepSize) const
 {
     // Create integral image from raw QImage
-    std::cerr << "Generating Integral Image" << std::endl;
+//    std::cerr << "Generating Integral Image" << std::endl;
     IntegralImage integralImage(image);
-    std::cerr << "...DONE!" << std::endl;
-//    return detectMultiScale(integralImage, scaleFactor, stepSize);
-    std::vector<detectionLocation> detections;
-    return detections;
+//    std::cerr << "...DONE!" << std::endl;
+    return detectMultiScale(integralImage, scaleFactor, stepSize);
 }
 
 
-/*
+
 std::vector<detectionLocation> CascadeClassifier::detectMultiScale(IntegralImage &integralImage, 
-                                                                   const uint16_t &scaleFactor, 
+                                                                   const double &scaleFactor, 
                                                                    const uint16_t &stepSize) const
 {
     std::vector<detectionLocation> detections;
-    uint16_t maxScale = std::min(integralImage.width()/m_windowWidth, integralImage.height()/m_windowHeight);
-    for (uint16_t scale = 1.0; scale < maxScale; scale *= scaleFactor)
+    double maxScale = std::min(integralImage.width()/m_windowWidth, integralImage.height()/m_windowHeight);
+    for (double scale = 1.0; scale < maxScale; scale *= scaleFactor)
     {
         //TODO pass reference to vector instead of returning & appending?
         std::vector<detectionLocation> scaleDetections = detectSingleScale(integralImage, scale, stepSize);
@@ -386,7 +352,7 @@ std::vector<detectionLocation> CascadeClassifier::detectMultiScale(IntegralImage
 
 //TODO carefully review rounding 
 std::vector<detectionLocation> CascadeClassifier::detectSingleScale(IntegralImage &integralImage, 
-                                                                    const uint16_t &scale, 
+                                                                    const double &scale, 
                                                                     const uint16_t &stepSize) const
 {
     std::vector<detectionLocation> detections;
@@ -408,17 +374,16 @@ std::vector<detectionLocation> CascadeClassifier::detectSingleScale(IntegralImag
 
 
 bool CascadeClassifier::detectAtLocation(IntegralImage &integralImage, 
-                                         const uint16_t &locationX, 
-                                         const uint16_t &locationY, 
-                                         const uint16_t &scale) const
+                                         const uint16_t &row, 
+                                         const uint16_t &col, 
+                                         const double &scale) const
 {
     for (std::vector<CascadeStage>::const_iterator stage = m_stages.begin(); stage != m_stages.end(); ++stage)
     {
-        if (stage->evaluate(integralImage, locationX, locationY, scale) == false) 
+        if (stage->evaluate(integralImage, row, col, scale) == false) 
         {
             return false;
         }
     }
     return true;
 }
-*/
