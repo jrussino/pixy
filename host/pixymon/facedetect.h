@@ -19,7 +19,9 @@
 #include <stdint.h>
 #include <QImage>
 
-
+// Integral Image - image representation used for Viola-Jones type cascade 
+// detection. The value of each pixel is the sum of all (grayscale) values of 
+// the pixels above and to the left.
 class IntegralImage
 {
 public:
@@ -34,10 +36,11 @@ public:
 private:
     uint16_t m_width;
     uint16_t m_height;
-    uint32_t m_data[321][201]; //TODO correct height
+    uint32_t m_data[321][201]; // TODO not enough memory for 321x201 integral image; will need to resize
 };
 
 
+// Detection Location
 struct detectionLocation
 {
     detectionLocation(const uint16_t &x, const uint16_t &y, const uint16_t &w, const uint16_t &h);
@@ -49,7 +52,9 @@ struct detectionLocation
 };
 
 
-// TODO make base feature class and inherit from this
+// Local Binary Pattern feature
+// TODO there should be a base "Feature" class from which this inherits
+// this would make it easy to implement other cascade classifiers (haar, etc.)
 class LBPFeature
 {
 public:
@@ -59,16 +64,18 @@ public:
     double evaluate(IntegralImage &integralImage, const uint16_t &windowCol, const uint16_t &windowRow, const double &scale) const;
 
 private:
-    std::vector<uint32_t> m_rectangle;
+    std::vector<uint8_t> m_rectangle;
     double m_failWeight;
     double m_passWeight;
     uint32_t m_lookupTable[8];
 
-    std::vector<uint32_t> textToUnsignedList(const char *text);
+    std::vector<uint8_t> textToUint8List(const char *text);
+    std::vector<uint32_t> textToUint32List(const char *text);
     std::vector<double> textToDoubleList(const char *text);
 };
 
 
+// Cascade Stage
 class CascadeStage
 {
 public:
@@ -79,10 +86,12 @@ public:
 
 private:
     double m_threshold;
-    std::vector<LBPFeature> m_features; // TODO make this vector of generic feature type
+    std::vector<LBPFeature> m_features; // TODO make this vector of generic "Feature" type
 };
 
 
+// Cascade Classifier
+// Uses a series of weak classifiers to quickly evaluate image regions for (e.g. face) detection. 
 class CascadeClassifier
 {
 public:
