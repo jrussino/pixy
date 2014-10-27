@@ -23,7 +23,7 @@
 #include "calc.h"
 #include <math.h>
 
-Renderer::Renderer(VideoWidget *video, Interpreter *interpreter) : m_blobs(interpreter), m_background(0, 0), m_cascade("/home/jrussino/projects/current/pixyCV/fdetect-proto/lbpcascade_frontalface.xml")
+Renderer::Renderer(VideoWidget *video, Interpreter *interpreter) : m_blobs(interpreter), m_background(0, 0), m_cascade("../host/pixymon/lbpcascade_frontalface.xml")
 {
     m_video = video;
     m_interpreter = interpreter;
